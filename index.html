@@ -144,7 +144,6 @@ main{padding-block:20px 112px;display:flex;flex-direction:column;gap:16px}
   transition:transform 150ms var(--ease);
 }
 .tile.empty{border:2px dashed var(--outline)}
-.tile:active{transform:scale(.98)}
 .tile .name{font-size:16px;line-height:22px;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .tile .foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;line-height:16px}
 .tile .foot span{min-width:0;overflow-wrap:anywhere}
@@ -165,7 +164,10 @@ main{padding-block:20px 112px;display:flex;flex-direction:column;gap:16px}
 
 /* Scrim, sheet, dialog */
 .scrim{position:fixed;inset:0;z-index:10;background:var(--scrim);opacity:0;transition:opacity 200ms var(--ease)}
-.scrim.open{opacity:1}
+.scrim{pointer-events:none}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet,.dialog{pointer-events:none}
+.sheet.open,.dialog.open{pointer-events:auto}
 .sheet,.dialog{--field-bg:var(--sc-high);background:var(--sc-high);color:var(--on-surface);position:fixed;z-index:11}
 .sheet{
   left:0;right:0;bottom:0;margin-inline:auto;width:100%;max-width:560px;
@@ -255,7 +257,9 @@ button.chip[aria-pressed="true"]{background:var(--primary-container);color:var(-
 .toast button{color:var(--inv-pr);padding:4px 10px;border-radius:6px;font-size:12px;line-height:18px;flex:none}
 .btn.small{height:36px;padding:0 14px;font-size:12px;border-radius:18px}
 .sheet-move{display:flex;gap:8px;flex-wrap:wrap}
-.grid li[draggable="true"]{cursor:grab}
+.grid li[data-drag]{cursor:grab}
+.tile{-webkit-user-select:none;user-select:none}
+body.dragging-now,body.dragging-now *{cursor:grabbing!important;-webkit-user-select:none;user-select:none}
 .grid li.dragging{opacity:.4}
 .grid li.dragover .tile{outline:3px solid var(--primary);outline-offset:2px}
 .keys{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;align-items:center;margin:0;font-size:12px;line-height:18px}
@@ -799,7 +803,7 @@ kbd{font:inherit;font-size:12px;padding:2px 8px;border:1px solid var(--outline);
     var canDrag = prefs.sort === "added" && !filter && !q && list.length > 1;
     list.forEach(function(s){
       var li = tileFor(s);
-      if (canDrag) li.draggable = true;
+      if (canDrag) li.setAttribute("data-drag", "1");
       grid.appendChild(li);
     });
     renderOverview(subs, counts);
@@ -1106,7 +1110,7 @@ kbd{font:inherit;font-size:12px;padding:2px 8px;border:1px solid var(--outline);
   });
 
   /* ---------- reorder (drag and drop, and buttons) ---------- */
-  var dragId = null;
+  var press = null, justDragged = false;
   function liId(node){
     var li = node && node.closest ? node.closest("li") : null;
     var t = li && li.querySelector(".tile");
@@ -1116,34 +1120,50 @@ kbd{font:inherit;font-size:12px;padding:2px 8px;border:1px solid var(--outline);
     var marked = grid.querySelectorAll(".dragging, .dragover");
     for (var i = 0; i < marked.length; i++) marked[i].classList.remove("dragging", "dragover");
   }
-  grid.addEventListener("dragstart", function(e){
+  // Pointer-based dragging: a press only becomes a drag after the mouse moves 12px,
+  // so ordinary clicks (even with a little wobble) always work.
+  grid.addEventListener("pointerdown", function(e){
+    if (e.pointerType === "touch" || e.button !== 0) return;
     var li = e.target.closest ? e.target.closest("li") : null;
-    if (!li || !li.draggable) return;
-    dragId = liId(li);
-    li.classList.add("dragging");
-    if (e.dataTransfer){
-      e.dataTransfer.effectAllowed = "move";
-      try { e.dataTransfer.setData("text/plain", dragId); } catch(x){}
-    }
+    if (!li || !li.hasAttribute("data-drag")) return;
+    press = { id: liId(li), x: e.clientX, y: e.clientY, active: false, over: null };
   });
-  grid.addEventListener("dragover", function(e){
-    if (!dragId) return;
-    var li = e.target.closest ? e.target.closest("li") : null;
-    if (!li) return;
-    e.preventDefault();
+  function endPress(cancelled){
+    if (!press) return;
+    var p = press; press = null;
+    clearDragClasses();
+    document.body.classList.remove("dragging-now");
+    if (!p.active) return;
+    justDragged = true;
+    setTimeout(function(){ justDragged = false; }, 80);
+    if (!cancelled && p.over) moveSubjectTo(p.id, p.over);
+  }
+  document.addEventListener("pointermove", function(e){
+    if (!press) return;
+    if (e.buttons === 0){ endPress(true); return; }
+    if (!press.active){
+      if (Math.abs(e.clientX - press.x) + Math.abs(e.clientY - press.y) < 12) return;
+      press.active = true;
+      var src = grid.querySelector('.tile[data-id="' + press.id + '"]');
+      if (src) src.parentElement.classList.add("dragging");
+      document.body.classList.add("dragging-now");
+    }
+    var under = document.elementFromPoint ? document.elementFromPoint(e.clientX, e.clientY) : null;
+    var li = under && under.closest ? under.closest(".grid li") : null;
+    var target = li ? liId(li) : null;
     var marked = grid.querySelectorAll(".dragover");
     for (var i = 0; i < marked.length; i++) marked[i].classList.remove("dragover");
-    if (liId(li) !== dragId) li.classList.add("dragover");
+    press.over = target && target !== press.id ? target : null;
+    if (press.over) li.classList.add("dragover");
   });
-  grid.addEventListener("drop", function(e){
-    if (!dragId) return;
-    e.preventDefault();
-    var id = dragId, target = liId(e.target);
-    dragId = null;
-    clearDragClasses();
-    if (target && target !== id) moveSubjectTo(id, target);
-  });
-  grid.addEventListener("dragend", function(){ dragId = null; clearDragClasses(); });
+  document.addEventListener("pointerup", function(){ endPress(false); });
+  document.addEventListener("pointercancel", function(){ endPress(true); });
+  window.addEventListener("blur", function(){ endPress(true); });
+  document.addEventListener("keydown", function(e){ if (press && e.key === "Escape") endPress(true); });
+  // swallow the click that follows a real drag, nothing else
+  grid.addEventListener("click", function(e){
+    if (justDragged){ e.stopPropagation(); e.preventDefault(); }
+  }, true);
 
   $("moveEarlier").addEventListener("click", function(){
     if (!activeId) return;
