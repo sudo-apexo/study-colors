@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Study Colors
+Comment=Color your subjects to see your study progress
+Exec=study-colors
+Icon=study-colors
+Terminal=false
+Categories=Education;Utility;
+StartupWMClass=study-colors
