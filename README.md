@@ -6,6 +6,21 @@ progress in every subject at a glance. Material 3 design, Monocraft font.
 
 Your subjects are saved on your computer in `~/.config/study-colors`.
 
+## Features
+
+- Add subjects and color each one from 16 colors to show your progress
+- Overview bar and legend; click a color in the legend to filter by it
+- Notes and an exam date for every subject, with a countdown on the tile
+- "Updated 3 days ago" labels so you can see which subjects need review
+- Search, and sort by your own order, name, exam date or needs review
+- Drag tiles to reorder them (or use the Earlier / Later buttons)
+- Undo and redo (Ctrl+Z, Ctrl+Shift+Z) and an Undo button after deleting
+- Keyboard shortcuts: N new subject, / search, T theme, ? shows the list
+- Desktop reminders for exams today and tomorrow (can be turned off)
+- Light, dark or system theme
+- Export and import a backup file
+- Remembers the window size and position
+
 ## Install (Arch Linux)
 
 ```sh
