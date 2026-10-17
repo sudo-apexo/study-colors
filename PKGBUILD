@@ -1,6 +1,6 @@
 # Maintainer: sudo-apexo <you@example.com>
 pkgname=study-colors
-pkgver=1.3.0
+pkgver=1.3.1
 pkgrel=1
 pkgdesc='Color your subjects to see your study progress'
 arch=('any')
@@ -18,7 +18,7 @@ package() {
   install -Dm755 study-colors "$pkgdir/usr/bin/study-colors"
   install -Dm644 study-colors.desktop "$pkgdir/usr/share/applications/study-colors.desktop"
   install -Dm644 icon.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/study-colors.svg"
-  install -Dm644 icon.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/study-colors.png"
+  install -Dm644 icon.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/study-colors.png"
 
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 OFL.txt "$pkgdir/usr/share/licenses/$pkgname/OFL-Monocraft.txt"
