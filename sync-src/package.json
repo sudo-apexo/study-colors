@@ -1,0 +1,15 @@
+{
+  "name": "study-colors-sync-build",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Builds study-sync.js and auth-helper.js (Firebase bundled into single files)",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "firebase": "13.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

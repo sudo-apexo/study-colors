@@ -1,6 +1,7 @@
-const { app, BrowserWindow, screen, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, screen, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
+const { startGoogleLogin, cancelGoogleLogin } = require("./google-login");
 
 // Remember window size, position and maximized state between launches.
 const stateFile = () => path.join(app.getPath("userData"), "window-state.json");
@@ -40,6 +41,7 @@ function createWindow() {
     backgroundColor: "#11140F",
     autoHideMenuBar: true,
     webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -66,6 +68,27 @@ function createWindow() {
     if (!url.startsWith("file://")) event.preventDefault();
   });
 }
+
+// Google sign-in: only our own page (a local file) may ask for it.
+ipcMain.handle("google-login", async (event, helperUrl) => {
+  const from = (event.senderFrame && event.senderFrame.url) || "";
+  if (!from.startsWith("file://")) return { error: "not-allowed" };
+  try {
+    const token = await startGoogleLogin({ openExternal: (u) => shell.openExternal(u), helperUrl });
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.show();
+      win.focus();
+    }
+    return { token };
+  } catch (e) {
+    return { error: (e && e.message) || "failed" };
+  }
+});
+ipcMain.handle("google-login-cancel", () => {
+  cancelGoogleLogin("cancelled");
+});
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {

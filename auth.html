@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Study Colors sign-in</title>
+<style>
+:root{
+  --surface:#F8FAF4; --on-surface:#191D17; --muted:#424940; --card:#ECEFE8; --outline:#72796F;
+  --primary:#2E6B3A; --on-primary:#FFFFFF; --error:#BA1A1A; --error-bg:#FFDAD6; --ok-bg:#B3F1B8; --on-ok:#00210B;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --surface:#11140F; --on-surface:#E1E4DB; --muted:#C2C9BD; --card:#1D211B; --outline:#8C9388;
+    --primary:#98D59E; --on-primary:#00390F; --error:#FFB4AB; --error-bg:#93000A; --ok-bg:#135223; --on-ok:#B3F1B8;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--surface);color:var(--on-surface)}
+body{
+  font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:15px;line-height:1.6;
+  min-height:100vh;display:grid;place-items:center;padding:24px 16px;
+}
+main{width:100%;max-width:440px;background:var(--card);border-radius:28px;padding:28px 24px;display:flex;flex-direction:column;gap:18px}
+h1{margin:0;font-size:22px;line-height:28px;font-weight:600}
+p{margin:0;color:var(--muted)}
+.logo{width:44px;height:44px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;padding:0 24px;
+  border:0;border-radius:24px;background:var(--primary);color:var(--on-primary);font:inherit;font-size:15px;cursor:pointer;text-decoration:none;
+}
+.btn[disabled]{opacity:.38;cursor:default}
+.btn:focus-visible{outline:3px solid var(--primary);outline-offset:3px}
+.note{padding:12px 16px;border-radius:12px;font-size:13px;line-height:20px;overflow-wrap:anywhere}
+.note.err{background:var(--error-bg);color:var(--error)}
+.note.ok{background:var(--ok-bg);color:var(--on-ok)}
+[hidden]{display:none!important}
+small{color:var(--muted);font-size:12px;line-height:18px}
+</style>
+</head>
+<body>
+<main>
+  <svg class="logo" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true">
+    <rect x="0" y="0" width="2.6" height="2.6" fill="#D32F2F"/><rect x="3.2" y="0" width="2.6" height="2.6" fill="#FFB300"/><rect x="6.4" y="0" width="2.6" height="2.6" fill="#2E7D32"/>
+    <rect x="0" y="3.2" width="2.6" height="2.6" fill="#9E9E9E"/><rect x="3.2" y="3.2" width="2.6" height="2.6" fill="#1976D2"/><rect x="6.4" y="3.2" width="2.6" height="2.6" fill="#8E24AA"/>
+    <rect x="0" y="6.4" width="2.6" height="2.6" fill="#2E7D32"/><rect x="3.2" y="6.4" width="2.6" height="2.6" fill="#D32F2F"/><rect x="6.4" y="6.4" width="2.6" height="2.6" fill="#00ACC1"/>
+  </svg>
+  <h1>Study Colors</h1>
+
+  <section id="start" hidden>
+    <p>Sign in with Google to sync your subjects between your devices.</p>
+    <p style="margin-top:18px"><button class="btn" id="go" type="button">Continue with Google</button></p>
+  </section>
+
+  <section id="done" hidden>
+    <div class="note ok" id="doneMsg"></div>
+    <p style="margin-top:18px" id="desktopHint" hidden>You can close this tab and go back to Study Colors.</p>
+    <p style="margin-top:18px" id="androidHint" hidden><a class="btn" id="back" href="#">Open Study Colors</a></p>
+  </section>
+
+  <section id="bad" hidden>
+    <div class="note err" id="badMsg"></div>
+  </section>
+
+  <div class="note err" id="err" hidden></div>
+  <small>This page only passes your Google sign-in to the Study Colors app on your own device.</small>
+</main>
+
+<script src="firebase-config.js"></script>
+<script src="auth-helper.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var params = new URLSearchParams(location.search);
+  var platform = params.get("platform") || "";
+  var state = params.get("state") || "";
+  var port = parseInt(params.get("port") || "", 10);
+  var ANDROID_SCHEME = "io.github.sudoapexo.studycolors";
+
+  function show(id) {
+    ["start", "done", "bad"].forEach(function (s) { $(s).hidden = s !== id; });
+  }
+  function showError(text) {
+    $("err").textContent = text;
+    $("err").hidden = false;
+  }
+
+  var okState = /^[a-f0-9]{16,64}$/.test(state);
+  var okPlatform = platform === "desktop" || platform === "android";
+  var okPort = platform !== "desktop" || (port >= 1024 && port <= 65535);
+
+  if (!okState || !okPlatform || !okPort) {
+    $("badMsg").textContent = "Open this page from the Study Colors app (tap Continue with Google there).";
+    show("bad");
+    return;
+  }
+  if (!window.StudyHelper || !window.StudyHelper.configured) {
+    $("badMsg").textContent = "Accounts are not set up yet. Add your Firebase settings to firebase-config.js (see SETUP-ACCOUNTS.md).";
+    show("bad");
+    return;
+  }
+  show("start");
+
+  function friendly(e) {
+    var code = (e && e.code) || "";
+    if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return "The Google window was closed before signing in. Try again.";
+    if (code === "auth/popup-blocked") return "Your browser blocked the Google window. Allow pop-ups for this page and try again.";
+    if (code === "auth/unauthorized-domain") return "This website is not allowed yet. In Firebase, open Authentication, then Settings, then Authorized domains, and add " + location.hostname + ".";
+    if (code === "auth/operation-not-allowed") return "Google sign-in is not turned on in Firebase yet (Authentication, then Sign-in method).";
+    if (code === "auth/network-request-failed") return "No internet connection.";
+    return "Could not sign in" + (code ? " (" + code + ")" : "") + ". Try again.";
+  }
+
+  $("go").addEventListener("click", function () {
+    $("err").hidden = true;
+    $("go").disabled = true;
+    window.StudyHelper.signIn().then(function (r) {
+      var token = encodeURIComponent(r.idToken);
+      var st = encodeURIComponent(state);
+      $("doneMsg").textContent = "Signed in" + (r.email ? " as " + r.email : "") + ".";
+      show("done");
+      if (platform === "desktop") {
+        $("desktopHint").hidden = false;
+        location.replace("http://127.0.0.1:" + port + "/callback?state=" + st + "&token=" + token);
+      } else {
+        var link = ANDROID_SCHEME + "://auth?state=" + st + "&token=" + token;
+        $("back").setAttribute("href", link);
+        $("androidHint").hidden = false;
+        try { location.href = link; } catch (e) {}
+      }
+    }, function (e) {
+      $("go").disabled = false;
+      showError(friendly(e));
+    });
+  });
+})();
+</script>
+</body>
+</html>

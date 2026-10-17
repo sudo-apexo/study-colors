@@ -66,3 +66,7 @@ electron .
 ## Licenses
 
 App code: MIT (`LICENSE`). Monocraft font: SIL Open Font License 1.1 (`OFL.txt`).
+
+## Accounts and sync (optional)
+
+Sign in with email or Google to keep your subjects in sync between devices. It needs a free Firebase project: follow [SETUP-ACCOUNTS.md](SETUP-ACCOUNTS.md). Without it the app saves on your device only.

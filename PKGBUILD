@@ -1,6 +1,6 @@
 # Maintainer: sudo-apexo <you@example.com>
 pkgname=study-colors
-pkgver=1.1.2
+pkgver=1.2.0
 pkgrel=1
 pkgdesc='Color your subjects to see your study progress'
 arch=('any')
@@ -13,7 +13,7 @@ package() {
   cd "$startdir"
 
   install -dm755 "$pkgdir/usr/lib/$pkgname"
-  install -m644 package.json main.js index.html icon.png "$pkgdir/usr/lib/$pkgname/"
+  install -m644 package.json main.js preload.js google-login.js index.html firebase-config.js study-sync.js icon.png "$pkgdir/usr/lib/$pkgname/"
 
   install -Dm755 study-colors "$pkgdir/usr/bin/study-colors"
   install -Dm644 study-colors.desktop "$pkgdir/usr/share/applications/study-colors.desktop"
