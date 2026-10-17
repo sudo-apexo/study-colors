@@ -70,3 +70,9 @@ App code: MIT (`LICENSE`). Monocraft font: SIL Open Font License 1.1 (`OFL.txt`)
 ## Accounts and sync (optional)
 
 Sign in with email or Google to keep your subjects in sync between devices. It needs a free Firebase project: follow [SETUP-ACCOUNTS.md](SETUP-ACCOUNTS.md). Without it the app saves on your device only.
+
+## Settings
+
+Tap the gear in the top bar (or press `,`). You can change the theme (system, light, dark), accent color, font, text size, corner style and motion, turn exam reminders on or off, export or import a backup, delete all subjects, and manage your account. Appearance is saved on each device separately.
+
+Bundled fonts: Monocraft, Inter, Nunito, Lora, Atkinson Hyperlegible and JetBrains Mono, all under the SIL Open Font License.
