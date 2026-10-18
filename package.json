@@ -1,7 +1,7 @@
 {
   "name": "study-colors",
   "productName": "Study Colors",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "Color your subjects to see your study progress",
   "main": "main.js",
   "license": "MIT",

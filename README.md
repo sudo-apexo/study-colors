@@ -75,4 +75,4 @@ Sign in with email or Google to keep your subjects in sync between devices. It n
 
 Tap the gear in the top bar (or press `,`). You can change the theme (system, light, dark), accent color, font, text size, corner style and motion, turn exam reminders on or off, export or import a backup, delete all subjects, and manage your account. Appearance is saved on each device separately.
 
-Bundled fonts: Monocraft, Inter, Nunito, Lora, Atkinson Hyperlegible and JetBrains Mono, all under the SIL Open Font License.
+Fonts: 14 are built in (Monocraft, Inter, DM Sans, Poppins, Nunito, Fredoka, Atkinson Hyperlegible, Lora, Merriweather, Playfair Display, Caveat, JetBrains Mono, Space Mono, Press Start 2P), all under the SIL Open Font License. You can also use the system fonts, or type the name of any font installed on your device.
