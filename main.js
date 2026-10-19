@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, net, screen, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { startGoogleLogin, cancelGoogleLogin } = require("./google-login");
@@ -29,6 +29,98 @@ function saveState(win) {
   } catch (e) {}
 }
 
+// ---- One-click updates -------------------------------------------------------------------
+// The page files (index.html, firebase-config.js, study-sync.js) can be replaced without
+// root: new copies go in the app's own data folder and are used when they are newer than the
+// installed ones. Changes to main.js / preload.js still need a reinstall ("shell" number).
+const RAW = "https://raw.githubusercontent.com/sudo-apexo/study-colors/main/";
+const PAGE_FILES = ["index.html", "firebase-config.js", "study-sync.js"];
+const updateDir = () => path.join(app.getPath("userData"), "app-update");
+const bundled = require("./package.json");
+const BUNDLED_SHELL = Number(bundled.shell) || 1;
+
+function newer(a, b) {
+  const x = String(a).split(".").map(Number), y = String(b).split(".").map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+  }
+  return false;
+}
+
+function hotVersion() {
+  try {
+    const v = JSON.parse(fs.readFileSync(path.join(updateDir(), "version.json"), "utf8"));
+    if (typeof v.version !== "string" || !/^\d+\.\d+\.\d+$/.test(v.version)) return null;
+    if (!PAGE_FILES.every((f) => fs.statSync(path.join(updateDir(), f)).size > 1000)) return null;
+    return v.version;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Folder the page is loaded from: the downloaded update if it is newer, else the installed copy.
+function pageDir() {
+  const hot = hotVersion();
+  return hot && newer(hot, bundled.version) ? updateDir() : __dirname;
+}
+
+function currentVersion() {
+  const hot = hotVersion();
+  return hot && newer(hot, bundled.version) ? hot : bundled.version;
+}
+
+async function fetchText(file) {
+  const res = await net.fetch(RAW + file + "?t=" + Date.now(), { cache: "no-store" });
+  if (!res.ok) throw new Error("http " + res.status);
+  return res.text();
+}
+
+let pendingInfo = null;
+
+ipcMain.handle("update-info", () => ({ version: currentVersion() }));
+
+ipcMain.handle("update-check", async (event) => {
+  if (!((event.senderFrame && event.senderFrame.url) || "").startsWith("file://")) return { error: "not-allowed" };
+  try {
+    const remote = JSON.parse(await fetchText("package.json"));
+    if (!/^\d+\.\d+\.\d+$/.test(remote.version)) throw new Error("bad version");
+    const current = currentVersion();
+    pendingInfo = remote;
+    if (Number(remote.shell || 1) > BUNDLED_SHELL) {
+      return { state: "reinstall", version: remote.version, current };
+    }
+    return { state: newer(remote.version, current) ? "available" : "current", version: remote.version, current };
+  } catch (e) {
+    return { error: "check" };
+  }
+});
+
+ipcMain.handle("update-install", async (event) => {
+  if (!((event.senderFrame && event.senderFrame.url) || "").startsWith("file://")) return { error: "not-allowed" };
+  try {
+    if (!pendingInfo || Number(pendingInfo.shell || 1) > BUNDLED_SHELL) return { error: "reinstall" };
+    const staging = updateDir() + ".new";
+    fs.rmSync(staging, { recursive: true, force: true });
+    fs.mkdirSync(staging, { recursive: true });
+    for (const f of PAGE_FILES) {
+      const text = await fetchText(f);
+      if (text.length < 1000) throw new Error("too small");
+      if (f === "index.html" && !text.includes("Study Colors")) throw new Error("not the app page");
+      fs.writeFileSync(path.join(staging, f), text);
+    }
+    fs.writeFileSync(path.join(staging, "version.json"), JSON.stringify({ version: pendingInfo.version }));
+    fs.rmSync(updateDir(), { recursive: true, force: true });
+    fs.renameSync(staging, updateDir());
+    setTimeout(() => {
+      app.relaunch();
+      app.exit(0);
+    }, 400);
+    return { ok: true };
+  } catch (e) {
+    return { error: "download" };
+  }
+});
+
 function createWindow() {
   const saved = loadState();
   const options = {
@@ -56,7 +148,7 @@ function createWindow() {
   if (saved && saved.maximized) win.maximize();
 
   win.setMenuBarVisibility(false);
-  win.loadFile(path.join(__dirname, "index.html"));
+  win.loadFile(path.join(pageDir(), "index.html"));
   win.on("close", () => saveState(win));
 
   // Keep the app on its own page; open any web link in the normal browser.
