@@ -4,6 +4,7 @@ const path = require("path");
 const { startGoogleLogin, cancelGoogleLogin } = require("./google-login");
 
 // Remember window size, position and maximized state between launches.
+const zoomFile = () => path.join(app.getPath("userData"), "zoom.json");
 const stateFile = () => path.join(app.getPath("userData"), "window-state.json");
 
 function loadState() {
@@ -150,6 +151,39 @@ function createWindow() {
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(pageDir(), "index.html"));
   win.on("close", () => saveState(win));
+
+  // Zoom with Ctrl +, Ctrl -, Ctrl 0 and Ctrl + mouse wheel. The level is remembered.
+  const wc = win.webContents;
+  const setZoom = (level) => {
+    const z = Math.max(-3, Math.min(5, Math.round(level * 2) / 2));
+    wc.setZoomLevel(z);
+    try {
+      fs.writeFileSync(zoomFile(), JSON.stringify({ level: z }));
+    } catch (e) {}
+  };
+  wc.on("did-finish-load", () => {
+    try {
+      const z = JSON.parse(fs.readFileSync(zoomFile(), "utf8")).level;
+      if (Number.isFinite(z)) wc.setZoomLevel(Math.max(-3, Math.min(5, z)));
+    } catch (e) {}
+  });
+  wc.on("before-input-event", (event, input) => {
+    if (input.type !== "keyDown" || !(input.control || input.meta) || input.alt) return;
+    const k = input.key;
+    if (k === "+" || k === "=" || k === "Add") {
+      setZoom(wc.getZoomLevel() + 0.5);
+    } else if (k === "-" || k === "_" || k === "Subtract") {
+      setZoom(wc.getZoomLevel() - 0.5);
+    } else if (k === "0") {
+      setZoom(0);
+    } else {
+      return;
+    }
+    event.preventDefault();
+  });
+  wc.on("zoom-changed", (event, direction) => {
+    setZoom(wc.getZoomLevel() + (direction === "in" ? 0.5 : -0.5));
+  });
 
   // Keep the app on its own page; open any web link in the normal browser.
   win.webContents.setWindowOpenHandler(({ url }) => {
