@@ -81,3 +81,7 @@ Fonts: 14 are built in (Monocraft, Inter, DM Sans, Poppins, Nunito, Fredoka, Atk
 
 Open **Settings > About** and tap **Update now**. The app downloads the newest page files and restarts.
 If the update says it "needs a reinstall", run `git pull` and `makepkg -si` once instead.
+
+## Icons
+
+The sun, moon and monitor theme icons are from Google Material Symbols (Rounded), Apache License 2.0.
