@@ -71,9 +71,22 @@ function currentVersion() {
 }
 
 async function fetchText(file) {
-  const res = await net.fetch(RAW + file + "?t=" + Date.now(), { cache: "no-store" });
-  if (!res.ok) throw new Error("http " + res.status);
-  return res.text();
+  let last;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 15000);
+    try {
+      const res = await net.fetch(RAW + file + "?t=" + Date.now(), { cache: "no-store", signal: ctl.signal });
+      if (!res.ok) throw new Error("http " + res.status);
+      return await res.text();
+    } catch (e) {
+      last = e;
+      await new Promise((r) => setTimeout(r, 600));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw last || new Error("failed");
 }
 
 let pendingInfo = null;
@@ -99,7 +112,8 @@ ipcMain.handle("update-check", async (event) => {
 ipcMain.handle("update-install", async (event) => {
   if (!((event.senderFrame && event.senderFrame.url) || "").startsWith("file://")) return { error: "not-allowed" };
   try {
-    if (!pendingInfo || Number(pendingInfo.shell || 1) > BUNDLED_SHELL) return { error: "reinstall" };
+    if (!pendingInfo) pendingInfo = JSON.parse(await fetchText("package.json"));
+    if (Number(pendingInfo.shell || 1) > BUNDLED_SHELL) return { error: "reinstall" };
     const staging = updateDir() + ".new";
     fs.rmSync(staging, { recursive: true, force: true });
     fs.mkdirSync(staging, { recursive: true });

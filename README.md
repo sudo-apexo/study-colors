@@ -85,3 +85,6 @@ If the update says it "needs a reinstall", run `git pull` and `makepkg -si` once
 ## Icons
 
 The sun, moon and monitor theme icons are from Google Material Symbols (Rounded), Apache License 2.0.
+
+The in-app update is now one tap: **Check for updates** checks, downloads and restarts the app by itself.
+(This version changes the app's shell, so reinstall once with `git pull` and `makepkg -si`.)

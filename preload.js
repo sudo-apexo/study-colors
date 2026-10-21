@@ -37,21 +37,21 @@ ipcRenderer.invoke("update-info").catch(() => ({})).then((info) => {
       btn.textContent = label;
       btn.disabled = !!off;
     };
-    const check = async () => {
+    // One tap does everything: check, download, restart.
+    const run = async (auto) => {
       set("check", "Checking for updates\u2026", "Checking\u2026", true);
       const r = await ipcRenderer.invoke("update-check").catch(() => ({ error: "check" }));
-      if (r.error) set("check", "Could not reach GitHub. Check your connection.", "Check for updates");
-      else if (r.state === "available") set("install", "Version " + r.version + " is ready.", "Update now");
-      else if (r.state === "reinstall") set("check", "Version " + r.version + " needs a reinstall: run git pull then makepkg -si.", "Check for updates");
-      else set("check", "You have the newest version.", "Check for updates");
+      if (r.error) return set("check", "Could not reach GitHub. Check your connection and tap again.", "Check for updates");
+      if (r.state === "reinstall") return set("check", "Version " + r.version + " needs a reinstall: run git pull then makepkg -si.", "Check for updates");
+      if (r.state !== "available") return set("check", "You have the newest version.", "Check for updates");
+      if (!auto) return set("install", "Version " + r.version + " is ready.", "Update now");
+      set("install", "Downloading version " + r.version + "\u2026 the app restarts when it is done.", "Updating\u2026", true);
+      const d = await ipcRenderer.invoke("update-install").catch(() => ({ error: "download" }));
+      if (d && d.error === "reinstall") set("check", "This update needs a reinstall: run git pull then makepkg -si.", "Check for updates");
+      else if (d && d.error) set("check", "The download failed. Tap to try again.", "Check for updates");
     };
-    btn.addEventListener("click", async () => {
-      if (mode !== "install") return check();
-      set("install", "Downloading and restarting\u2026", "Updating\u2026", true);
-      const r = await ipcRenderer.invoke("update-install").catch(() => ({ error: "download" }));
-      if (r && r.error) set("check", "The update failed. Try again later.", "Check for updates");
-    });
+    btn.addEventListener("click", () => run(true));
     msg.textContent = v.trim();
-    check();
+    run(false);
   });
 });
