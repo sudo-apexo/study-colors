@@ -35,6 +35,7 @@ function saveState(win) {
 // root: new copies go in the app's own data folder and are used when they are newer than the
 // installed ones. Changes to main.js / preload.js still need a reinstall ("shell" number).
 const RAW = "https://raw.githubusercontent.com/sudo-apexo/study-colors/main/";
+const API = "https://api.github.com/repos/sudo-apexo/study-colors/";
 const PAGE_FILES = ["index.html", "firebase-config.js", "study-sync.js"];
 const updateDir = () => path.join(app.getPath("userData"), "app-update");
 const bundled = require("./package.json");
@@ -70,13 +71,17 @@ function currentVersion() {
   return hot && newer(hot, bundled.version) ? hot : bundled.version;
 }
 
-async function fetchText(file) {
+// raw.githubusercontent.com keeps files for about 5 minutes, so a plain fetch can show an old version
+// right after a release. Asking GitHub for the newest commit first and then fetching files by that
+// commit id always gives the current files. If that lookup fails, fall back to the plain address.
+let headSha = null;
+async function getText(url, headers) {
   let last;
   for (let attempt = 0; attempt < 3; attempt++) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 15000);
     try {
-      const res = await net.fetch(RAW + file + "?t=" + Date.now(), { cache: "no-store", signal: ctl.signal });
+      const res = await net.fetch(url, { cache: "no-store", signal: ctl.signal, headers: headers || {} });
       if (!res.ok) throw new Error("http " + res.status);
       return await res.text();
     } catch (e) {
@@ -88,6 +93,17 @@ async function fetchText(file) {
   }
   throw last || new Error("failed");
 }
+async function refreshHead() {
+  headSha = null;
+  try {
+    const j = JSON.parse(await getText(API + "commits/main?t=" + Date.now(), { Accept: "application/vnd.github+json" }));
+    if (/^[0-9a-f]{40}$/.test(j.sha)) headSha = j.sha;
+  } catch (e) {}
+}
+async function fetchText(file) {
+  const base = headSha ? "https://raw.githubusercontent.com/sudo-apexo/study-colors/" + headSha + "/" : RAW;
+  return getText(base + file + "?t=" + Date.now());
+}
 
 let pendingInfo = null;
 
@@ -96,6 +112,7 @@ ipcMain.handle("update-info", () => ({ version: currentVersion() }));
 ipcMain.handle("update-check", async (event) => {
   if (!((event.senderFrame && event.senderFrame.url) || "").startsWith("file://")) return { error: "not-allowed" };
   try {
+    await refreshHead();
     const remote = JSON.parse(await fetchText("package.json"));
     if (!/^\d+\.\d+\.\d+$/.test(remote.version)) throw new Error("bad version");
     const current = currentVersion();

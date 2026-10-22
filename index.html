@@ -2139,7 +2139,7 @@ body::before{
 
   /* ---------- settings screen ---------- */
   var settingsDlg = $("settings");
-  var APP_VERSION = "1.16.7";
+  var APP_VERSION = "1.16.8";
   function radioBtn(cls, label, checked, onPick, extra){
     var b = el("button", cls + " state");
     b.type = "button";
@@ -2879,7 +2879,12 @@ body::before{
       var w = u.parentElement, m = w && w.nextElementSibling;
       return m && m.classList.contains("acct-msg") ? m.textContent : "";
     }
-    function hide(){ shown = false; doneAt = 0; card.classList.remove("on","done","det","err"); }
+    var armed = false, clickAt = 0;   // only animate runs that the person started by pressing the button
+    document.addEventListener("click", function(e){
+      var t = e.target && e.target.closest && e.target.closest("#updBtn,#sideUpdate");
+      if (t){ armed = true; clickAt = Date.now(); }
+    }, true);
+    function hide(){ armed = false; shown = false; doneAt = 0; card.classList.remove("on","done","det","err"); }
     function flash(kind, t, m, ms){
       clearTimeout(hideTimer); shown = true; minUntil = 0; doneAt = Date.now() + 1e9;
       card.classList.remove("det","done","err"); card.classList.add("on", kind);
@@ -2900,7 +2905,7 @@ body::before{
     function tick(){
       var u = document.getElementById("updBtn"); if (!u) return;
       var label = u.textContent.trim(), msg = msgOf(u);
-      var busy = u.disabled && /check|download|updat/i.test(label);
+      var busy = armed && u.disabled && /check|download|updat/i.test(label);
       if (busy){
         clearTimeout(hideTimer); doneAt = 0;
         if (!shown){ shown = true; minUntil = Date.now() + 1600; card.classList.remove("done"); }
@@ -2913,7 +2918,7 @@ body::before{
         else card.classList.remove("det");
         return;
       }
-      if (!shown) return;
+      if (!shown){ if (!u.disabled) armed = armed && Date.now() - clickAt < 4000; return; }
       if (Date.now() < minUntil) return;
       if (!doneAt){
         if (/newest|latest|up to date/i.test(msg)){
