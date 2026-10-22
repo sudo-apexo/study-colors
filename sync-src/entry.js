@@ -33,7 +33,7 @@ function normalize(e) {
 
 function publicUser(u) {
   if (!u) return null;
-  return { uid: u.uid, email: u.email || "", name: u.displayName || "" };
+  return { uid: u.uid, email: u.email || "", name: u.displayName || "", photo: u.photoURL || "" };
 }
 
 var api = { configured: false, initError: null, version: 1 };
