@@ -2,6 +2,11 @@
 // The only things the page may ask the app to do. Runs before the page, with no other Node access.
 const { contextBridge, ipcRenderer } = require("electron");
 
+// Settings from ~/.config/study-colors/firebase-config.json (read by the main process).
+let localConfig = null;
+try { localConfig = ipcRenderer.sendSync("local-config"); } catch (e) {}
+contextBridge.exposeInMainWorld("studyLocalConfig", localConfig || {});
+
 contextBridge.exposeInMainWorld("studyDesktop", {
   // Opens the browser for Google sign-in; resolves with Google's ID token, rejects with Error(code).
   googleSignIn: (helperUrl) =>

@@ -1,2 +1,5 @@
 sync-src/node_modules/
 node_modules/
+
+firebase-config.local.js
+firebase-config.json

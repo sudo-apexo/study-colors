@@ -107,6 +107,16 @@ async function fetchText(file) {
 
 let pendingInfo = null;
 
+// Firebase settings live in a file on this computer instead of in the public repository.
+ipcMain.on("local-config", (event) => {
+  let out = null;
+  try {
+    // Only this app's own page is ever loaded in the window (other addresses are blocked), so the sender is trusted.
+    const c = JSON.parse(fs.readFileSync(path.join(app.getPath("userData"), "firebase-config.json"), "utf8"));
+    if (c && c.firebase && typeof c.firebase.apiKey === "string") out = c;
+  } catch (e) {}
+  event.returnValue = out;   // must be set exactly once
+});
 ipcMain.handle("update-info", () => ({ version: currentVersion() }));
 
 ipcMain.handle("update-check", async (event) => {

@@ -64,6 +64,18 @@ small{color:var(--muted);font-size:12px;line-height:18px}
 </main>
 
 <script src="firebase-config.js"></script>
+<script>
+// The Firebase settings arrive from the app in the address (#cfg=...), so none are stored on this public page.
+(function () {
+  try {
+    var m = /[#&]cfg=([^&]+)/.exec(location.hash || "");
+    if (!m) return;
+    var c = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, "+").replace(/_/g, "/")))));
+    if (c && typeof c.apiKey === "string") window.STUDY_FIREBASE_CONFIG = c;
+    history.replaceState(null, "", location.pathname + location.search);
+  } catch (e) {}
+})();
+</script>
 <script src="auth-helper.js"></script>
 <script>
 (function () {

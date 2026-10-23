@@ -1,20 +1,23 @@
-// Your Firebase project settings. These values are public identifiers, not passwords:
-// what protects your data is the rule in firestore.rules (only you can read your own subjects).
+// Your Firebase settings are NOT stored in this repository.
 //
-// Filled in from the study-colors Firebase project (see SETUP-ACCOUNTS.md).
-window.STUDY_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDwjmxlpcHnfXig292UxH9yv72hcwzmHHg",
-  authDomain: "study-colors.firebaseapp.com",
-  projectId: "study-colors",
-  appId: "1:992844163133:web:522af0766e14b322a5e254",
-  storageBucket: "study-colors.firebasestorage.app",
-  messagingSenderId: "992844163133"
-};
-
-// The page that handles "Continue with Google" (served by GitHub Pages from this repository).
-window.STUDY_AUTH_HELPER_URL = "https://sudo-apexo.github.io/study-colors/auth.html";
-
-// Android only: the "Web client ID" of this Firebase project. With it, "Continue with Google" opens the
-// phone's own account picker instead of the browser. Find it in Firebase: Authentication > Sign-in method >
-// Google > Web SDK configuration. It looks like 123456789-abc123.apps.googleusercontent.com
-window.STUDY_GOOGLE_WEB_CLIENT_ID = "992844163133-2sdqmocu2hekhivd6ig063kppi2t1qj1.apps.googleusercontent.com";
+//  - Linux app: they are read from a small file on your computer,
+//        ~/.config/study-colors/firebase-config.json
+//    (see SETUP-ACCOUNTS.md for the exact content). The app hands them to this file.
+//  - Android app: the build on GitHub writes this file from a GitHub secret (SETUP-ACCOUNTS.md).
+//
+// Until then these placeholders keep sign-in switched off and the app works on this device only.
+(function () {
+  var L = window.studyLocalConfig || {};
+  window.STUDY_FIREBASE_CONFIG = L.firebase || {
+    apiKey: "PASTE_API_KEY",
+    authDomain: "PASTE_AUTH_DOMAIN",
+    projectId: "PASTE_PROJECT_ID",
+    appId: "PASTE_APP_ID",
+    storageBucket: "PASTE_STORAGE_BUCKET",
+    messagingSenderId: "PASTE_SENDER_ID"
+  };
+  // The page that handles "Continue with Google" (GitHub Pages). It is not secret.
+  window.STUDY_AUTH_HELPER_URL = L.helperUrl || "https://sudo-apexo.github.io/study-colors/auth.html";
+  // Android only: the "Web client ID" (looks like 123-abc.apps.googleusercontent.com).
+  window.STUDY_GOOGLE_WEB_CLIENT_ID = L.googleWebClientId || "";
+})();
