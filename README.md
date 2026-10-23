@@ -6,6 +6,8 @@ progress in every subject at a glance. Material 3 design, Monocraft font.
 
 Your subjects are saved on your computer in `~/.config/study-colors`.
 
+> **Private settings:** the Firebase settings are not in this repository. See [docs/SETUP-ACCOUNTS.md](docs/SETUP-ACCOUNTS.md) to add them on your own computer.
+
 ## Features
 
 - Add subjects and color each one from 16 colors to show your progress
@@ -49,27 +51,39 @@ sudo pacman -R study-colors
 ## Try it without installing
 
 ```sh
-electron .
+electron app
 ```
 
-## Files
+## Project layout
 
-| File | Purpose |
-| --- | --- |
-| `index.html` | The app (page, styles, script, embedded font) |
-| `main.js`, `package.json` | Electron window |
-| `study-colors` | Launcher installed to `/usr/bin` |
-| `study-colors.desktop` | App launcher entry |
-| `icon.svg`, `icon.png` | App icon |
-| `PKGBUILD` | Arch package recipe |
+```
+study-colors/
+├── app/                  The desktop app (this is what gets installed)
+│   ├── index.html        The whole app: page, styles, script, embedded fonts
+│   ├── main.js           Electron window, zoom, one-tap updates
+│   ├── preload.js        The small, safe bridge between the window and the page
+│   ├── google-login.js   Google sign-in through your browser
+│   ├── firebase-config.js  Reads your private Firebase settings (no secrets inside)
+│   ├── study-sync.js     Email sign-in and cloud sync (built from tools/sync-src)
+│   ├── icon.png          Window icon
+│   └── package.json      App name, version, "shell" number
+├── packaging/            Arch Linux files: launcher, .desktop entry, icon.svg
+├── docs/                 SETUP-ACCOUNTS.md (Firebase, step by step)
+├── firebase/             firestore.rules (who may read which data)
+├── licenses/             Font license (Monocraft, SIL OFL)
+├── tools/sync-src/       Source that builds study-sync.js and auth-helper.js
+├── auth.html, auth-helper.js   The Google sign-in page served by GitHub Pages
+├── PKGBUILD              Arch package recipe (makepkg -si)
+└── LICENSE               MIT
+```
 
 ## Licenses
 
-App code: MIT (`LICENSE`). Monocraft font: SIL Open Font License 1.1 (`OFL.txt`).
+App code: MIT (`LICENSE`). Monocraft font: SIL Open Font License 1.1 (`licenses/OFL-Monocraft.txt`).
 
 ## Accounts and sync (optional)
 
-Sign in with email or Google to keep your subjects in sync between devices. It needs a free Firebase project: follow [SETUP-ACCOUNTS.md](SETUP-ACCOUNTS.md). Without it the app saves on your device only.
+Sign in with email or Google to keep your subjects in sync between devices. It needs a free Firebase project: follow [docs/SETUP-ACCOUNTS.md](docs/SETUP-ACCOUNTS.md). Without it the app saves on your device only.
 
 ## Settings
 

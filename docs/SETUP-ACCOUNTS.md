@@ -14,7 +14,7 @@ Study Colors works without an account. These steps add **Email** and **Google** 
 ## 3. Create the database
 1. Left menu: **Build > Firestore Database** > **Create database**.
 2. Pick any location near you, choose **Production mode**, **Enable**.
-3. Open the **Rules** tab, delete everything there, paste the contents of `firestore.rules` from this repo, click **Publish**.
+3. Open the **Rules** tab, delete everything there, paste the contents of `firebase/firestore.rules` from this repo, click **Publish**.
 
 ## 4. Get your app settings
 1. Click the gear next to **Project Overview** > **Project settings**.
@@ -32,7 +32,7 @@ Study Colors works without an account. These steps add **Email** and **Google** 
        "googleWebClientId": "...apps.googleusercontent.com"
      }
      ```
-   - **Android app:** in the Android repo open **Settings > Secrets and variables > Actions > New repository secret**, name it `FIREBASE_CONFIG_JS`, and paste the text of a `firebase-config.js` file that has your real values (same shape as the `firebase-config.js` in this repo, but with `window.STUDY_FIREBASE_CONFIG = { ... }` filled in). The build writes it into the app.
+   - **Android app:** in the Android repo open **Settings > Secrets and variables > Actions > New repository secret**, name it `FIREBASE_CONFIG_JS`, and paste the text of a `firebase-config.js` file that has your real values (same shape as `app/firebase-config.js` but written out in full, but with `window.STUDY_FIREBASE_CONFIG = { ... }` filled in). The build writes it into the app.
    - Your data is protected by the rules from step 3, not by hiding these values. For extra safety, restrict the API key to your own apps in Google Cloud Console (APIs and Services > Credentials).
 
 ## 5. Turn on the Google sign-in page (GitHub Pages)

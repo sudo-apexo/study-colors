@@ -34,7 +34,7 @@ function saveState(win) {
 // The page files (index.html, firebase-config.js, study-sync.js) can be replaced without
 // root: new copies go in the app's own data folder and are used when they are newer than the
 // installed ones. Changes to main.js / preload.js still need a reinstall ("shell" number).
-const RAW = "https://raw.githubusercontent.com/sudo-apexo/study-colors/main/";
+const RAW = "https://raw.githubusercontent.com/sudo-apexo/study-colors/main/app/";
 const API = "https://api.github.com/repos/sudo-apexo/study-colors/";
 const PAGE_FILES = ["index.html", "firebase-config.js", "study-sync.js"];
 const updateDir = () => path.join(app.getPath("userData"), "app-update");
@@ -101,7 +101,7 @@ async function refreshHead() {
   } catch (e) {}
 }
 async function fetchText(file) {
-  const base = headSha ? "https://raw.githubusercontent.com/sudo-apexo/study-colors/" + headSha + "/" : RAW;
+  const base = headSha ? "https://raw.githubusercontent.com/sudo-apexo/study-colors/" + headSha + "/app/" : RAW;
   return getText(base + file + "?t=" + Date.now());
 }
 

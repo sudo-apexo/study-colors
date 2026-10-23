@@ -63,7 +63,6 @@ small{color:var(--muted);font-size:12px;line-height:18px}
   <small>This page only passes your Google sign-in to the Study Colors app on your own device.</small>
 </main>
 
-<script src="firebase-config.js"></script>
 <script>
 // The Firebase settings arrive from the app in the address (#cfg=...), so none are stored on this public page.
 (function () {
@@ -105,7 +104,7 @@ small{color:var(--muted);font-size:12px;line-height:18px}
     return;
   }
   if (!window.StudyHelper || !window.StudyHelper.configured) {
-    $("badMsg").textContent = "Accounts are not set up yet. Add your Firebase settings to firebase-config.js (see SETUP-ACCOUNTS.md).";
+    $("badMsg").textContent = "Open this page from the Study Colors app (tap Continue with Google there). The app hands over the sign-in settings.";
     show("bad");
     return;
   }
