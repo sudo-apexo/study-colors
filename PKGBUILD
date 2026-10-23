@@ -1,6 +1,6 @@
 # Maintainer: sudo-apexo <you@example.com>
 pkgname=study-colors
-pkgver=1.16.13
+pkgver=1.16.14
 pkgrel=1
 pkgdesc='Color your subjects to see your study progress'
 arch=('any')
